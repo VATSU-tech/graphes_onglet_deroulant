@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Exercice Groupe 4 — Menu (Arbre)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c8;
+      --accent:#4fd1c5;
+    }
+    body{
+      font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+      background: linear-gradient(180deg,#071024 0%, #08142a 100%);
+      color:var(--text); margin:0; padding:24px;
+      display:flex; gap:24px; min-height:100vh; align-items:flex-start;
+    }
+    .card{
+      background:var(--card); border-radius:12px; padding:18px; box-shadow:0 6px 20px rgba(2,6,23,0.6);
+      width:480px;
+    }
+    h1{margin:0 0 12px 0; font-size:18px}
+    .controls{display:grid; gap:8px;}
+    label{font-size:13px; color:var(--muted)}
+    input[type="text"], textarea, select{
+      width:100%; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06);
+      background:rgba(255,255,255,0.02); color:var(--text);
+    }
+    button{
+      background:var(--accent); color:#002224; border:0; padding:8px 12px; border-radius:8px; cursor:pointer;
+      font-weight:700;
+    }
+    .menu-render{background:rgba(255,255,255,0.01); padding:12px; border-radius:8px; max-height:420px; overflow:auto;}
+    ul.tree{list-style:none; padding-left:14px; margin:6px 0;}
+    ul.tree ul{margin-left:12px; border-left:1px dashed rgba(255,255,255,0.04); padding-left:12px;}
+    .node{padding:4px 6px; display:flex; justify-content:space-between; align-items:center; gap:8px;}
+    .node .title{font-weight:600}
+    .muted{color:var(--muted); font-size:13px}
+    .small{font-size:13px}
+    .log{background:#081826; padding:10px; border-radius:8px; height:240px; overflow:auto; color:var(--muted); font-family:monospace; font-size:13px;}
+    .summary{margin-top:10px; font-size:13px; color:var(--muted)}
+    .actions{display:flex; gap:8px; margin-top:8px;}
+  </style>
+</head>
+<body>
+
+  <div class="card" id="left">
+    <h1>Navigation dans un menu — Interface interactive</h1>
+
+    <div class="controls">
+      <label>Commande de navigation (ex: <span class="muted">Menu &gt; Fichier</span>)</label>
+      <input type="text" id="navInput" placeholder="Menu > Fichier" value="Menu > Fichier" />
+
+      <div class="actions">
+        <button id="btnNavigate">Naviguer</button>
+        <button id="btnShowAll">Afficher tout</button>
+      </div>
+
+      <label>Ajouter un élément : chemin parent (ex: <span class="muted">Menu > Fichier</span>)</label>
+      <input type="text" id="addParent" placeholder="Chemin parent" value="Menu > Fichier" />
+      <label>Nom du nouvel élément</label>
+      <input type="text" id="addName" placeholder="Ex: Enregistrer" value="Enregistrer" />
+      <div class="actions">
+        <button id="btnAdd">Ajouter</button>
+        <button id="btnAddAndShow">Ajouter + Afficher</button>
+      </div>
+
+      <label>Recherche (nom exact) :</label>
+      <input type="text" id="searchInput" placeholder="Ex: Aide" />
+      <div class="actions">
+        <button id="btnSearch">Rechercher</button>
+      </div>
+
+      <div class="summary" id="summaryBox"></div>
+    </div>
+  </div>
+
+  <div class="card" id="right">
+    <h1>Aperçu du menu (structure)</h1>
+    <div class="menu-render" id="menuRender"></div>
+
+    <h1 style="margin-top:12px;font-size:16px;">Console & logs</h1>
+    <div class="log" id="log"></div>
+  </div>
+
+<script>
+/* ---------------------------
+   Représentation du menu (objet JS)
+   Structure : chaque nœud a la forme:
+   { title: "Nom", children: [ ... même forme ... ] }
+   La racine ici s'appelle "Menu".
+   --------------------------- */
+const menu = {
+  title: "Menu",
+  children: [
+    { title: "Fichier", children: [
+        { title: "Nouveau", children: [] },
+        { title: "Ouvrir", children: [] },
+        { title: "Quitter", children: [] }
+    ]},
+    { title: "Édition", children: [
+        { title: "Couper", children: [] },
+        { title: "Copier", children: [] },
+        { title: "Coller", children: [] }
+    ]},
+    { title: "Affichage", children: [] },
+    { title: "Aide", children: [] }
+  ]
+};
+
+/* ---------------------------
+   Fonction d'affichage DOM (rendu en liste indentée)
+   Utilise la récursivité (parcours préfixe)
+   --------------------------- */
+function renderMenu(node, container){
+  // crée un <ul> pour les enfants si nécessaire
+  const ul = document.createElement('ul');
+  ul.className = 'tree';
+
+  // traitement des enfants (chaque enfant devient <li>)
+  if (!node.children) node.children = [];
+  for (const child of node.children){
+    const li = document.createElement('li');
+
+    const row = document.createElement('div');
+    row.className = 'node';
+
+    const title = document.createElement('div');
+    title.className = 'title';
+    title.textContent = child.title;
+
+    const meta = document.createElement('div');
+    meta.className = 'muted small';
+    meta.textContent = child.children && child.children.length ? `${child.children.length} sous-élément(s)` : 'aucune sous-option';
+
+    row.appendChild(title);
+    row.appendChild(meta);
+    li.appendChild(row);
+
+    // si l'enfant a des enfants, on appelle renderMenu récursivement
+    if (child.children && child.children.length > 0){
+      const sub = renderMenu(child, li); // renvoie un <ul>
+      li.appendChild(sub);
+    }
+
+    ul.appendChild(li);
+  }
+
+  // place l'ul dans le container (appel initial fournit container = element DOM)
+  if (container instanceof Element){
+    container.appendChild(ul);
+  }
+  return ul;
+}
+
+/* ---------------------------
+   Fonction utile : vider rendu
+   --------------------------- */
+function clearRender(){
+  const r = document.getElementById('menuRender');
+  r.innerHTML = '';
+}
+
+/* ---------------------------
+   Afficher le menu complet dans le DOM
+   --------------------------- */
+function showMenu(){
+  clearRender();
+  const container = document.getElementById('menuRender');
+  // on affiche le titre racine en haut
+  const title = document.createElement('div');
+  title.className = 'node';
+  const t = document.createElement('div');
+  t.className = 'title';
+  t.textContent = menu.title;
+  const m = document.createElement('div');
+  m.className = 'muted small';
+  m.textContent = menu.children.length + ' rubriques';
+  title.appendChild(t); title.appendChild(m);
+  container.appendChild(title);
+  renderMenu(menu, container);
+}
+
+/* ---------------------------
+   Navigation (simulation)
+   Entrée: "Menu > Fichier > Ouvrir"
+   Renvoie le nœud correspondant ou null si introuvable.
+   --------------------------- */
+function navigate(pathStr){
+  const parts = pathStr.split('>').map(s => s.trim()).filter(s => s.length);
+  if (parts.length === 0) return null;
+
+  // la racine doit correspondre au titre racine (sinon on peut être permissif)
+  let idx = 0;
+  if (parts[0] !== menu.title) {
+    // si l'utilisateur n'a pas mis "Menu" on accepte que la recherche commence depuis la racine
+    if (parts[0] === '') parts.shift();
+  }
+  let current = menu;
+  for (const p of parts.slice(1)){ // on commence après "Menu"
+    if (!current.children) return null;
+    const found = current.children.find(c => c.title.toLowerCase() === p.toLowerCase());
+    if (!found) return null;
+    current = found;
+  }
+  return current;
+}
+
+/* ---------------------------
+   Ajout d'un nouvel élément sous un parent donné
+   cheminParent: "Menu > Fichier"
+   newName: "Enregistrer"
+   --------------------------- */
+function addItem(pathParent, newName){
+  // rechercher le nœud parent
+  const parent = navigate(pathParent);
+  if (!parent) return { ok:false, message: "Parent introuvable" };
+  if (!parent.children) parent.children = [];
+  // empêcher doublons exacts
+  if (parent.children.some(ch => ch.title.toLowerCase() === newName.toLowerCase())){
+    return { ok:false, message: "L'élément existe déjà" };
+  }
+  parent.children.push({ title: newName, children: [] });
+  return { ok:true, message: `Ajouté "${newName}" sous "${pathParent}"` };
+}
+
+/* ---------------------------
+   Recherche par titre (DFS) : renvoie un tableau de chemins complets
+   (ex: ["Menu > Fichier > Ouvrir", ...]) si plusieurs correspondances
+   --------------------------- */
+function searchByTitle(name){
+  const results = [];
+  function dfs(node, path){
+    if (!node) return;
+    const currentPath = path ? (path + ' > ' + node.title) : node.title;
+    if (node.title.toLowerCase() === name.toLowerCase()){
+      results.push(currentPath);
+    }
+    if (node.children){
+      for (const ch of node.children) dfs(ch, currentPath);
+    }
+  }
+  dfs(menu, '');
+  return results;
+}
+
+/* ---------------------------
+   Comptes & profondeur
+   - countNodes: nombre total de nœuds (rubriques + options)
+   - maxDepth: profondeur maximale (racine depth=1)
+   --------------------------- */
+function countNodes(){
+  let c = 0;
+  function dfs(n){
+    c += 1;
+    if (n.children) for (const ch of n.children) dfs(ch);
+  }
+  dfs(menu);
+  return c;
+}
+function maxDepth(){
+  function dfs(n){
+    if (!n.children || n.children.length === 0) return 1;
+    let best = 0;
+    for (const ch of n.children){
+      best = Math.max(best, dfs(ch));
+    }
+    return 1 + best;
+  }
+  return dfs(menu);
+}
+
+/* ---------------------------
+   Utilitaires de logging
+   --------------------------- */
+function log(msg){
+  const L = document.getElementById('log');
+  const line = document.createElement('div');
+  line.textContent = `[${(new Date()).toLocaleTimeString()}] ${msg}`;
+  L.prepend(line);
+}
+
+/* ---------------------------
+   Hook boutons & actions
+   --------------------------- */
+document.getElementById('btnShowAll').addEventListener('click', () => {
+  showMenu();
+  const s = `Nœuds: ${countNodes()} — Profondeur max: ${maxDepth()}`;
+  document.getElementById('summaryBox').textContent = s;
+  log('Affichage complet du menu.');
+});
+
+document.getElementById('btnNavigate').addEventListener('click', () => {
+  const path = document.getElementById('navInput').value.trim();
+  const node = navigate(path);
+  if (!node){
+    log(`Navigation: chemin introuvable -> "${path}"`);
+    alert('Chemin introuvable. Vérifie la casse ou l\'orthographe.');
+    return;
+  }
+  // afficher les sous-éléments du nœud trouvé
+  if (!node.children || node.children.length === 0){
+    log(`Navigation: "${path}" → (aucune sous-option)`);
+    alert(`"${path}" → (aucune sous-option)`);
+  } else {
+    const list = node.children.map(c => c.title).join(', ');
+    log(`Navigation: "${path}" → ${list}`);
+    alert(`Sous-options de "${path}":\n- ${node.children.map(c => c.title).join('\n- ')}`);
+  }
+});
+
+document.getElementById('btnAdd').addEventListener('click', () => {
+  const p = document.getElementById('addParent').value.trim();
+  const name = document.getElementById('addName').value.trim();
+  const res = addItem(p, name);
+  log(`Ajout: ${res.message}`);
+  if (!res.ok) alert(res.message);
+});
+
+document.getElementById('btnAddAndShow').addEventListener('click', () => {
+  const p = document.getElementById('addParent').value.trim();
+  const name = document.getElementById('addName').value.trim();
+  const res = addItem(p, name);
+  log(`Ajout: ${res.message}`);
+  showMenu();
+  document.getElementById('summaryBox').textContent = `Nœuds: ${countNodes()} — Profondeur max: ${maxDepth()}`;
+  if (!res.ok) alert(res.message);
+});
+
+document.getElementById('btnSearch').addEventListener('click', () => {
+  const q = document.getElementById('searchInput').value.trim();
+  if (!q) return alert('Entre un nom à rechercher (ex: Aide)');
+  const found = searchByTitle(q);
+  if (found.length === 0){
+    log(`Recherche: "${q}" → aucun résultat`);
+    alert(`Aucun élément intitulé "${q}" trouvé.`);
+  } else {
+    log(`Recherche: "${q}" → ${found.length} résultat(s)`);
+    alert('Résultats:\n' + found.join('\n'));
+  }
+});
+
+/* ---------------------------
+   initialisation : affichage initial
+   --------------------------- */
+showMenu();
+document.getElementById('summaryBox').textContent = `Nœuds: ${countNodes()} — Profondeur max: ${maxDepth()}`;
+log('Initialisation terminée.');
+
+</script>
+</body>
+</html>
