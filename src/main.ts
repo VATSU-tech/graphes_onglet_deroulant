@@ -4,6 +4,14 @@ interface MenuNode {
     children?: MenuNode[];
 }
 
+interface etudiant{
+    nom:string;
+    post_nom:string;
+    prenom:string;
+    matricule:string;
+    
+}
+
 function afficher(couleur:string):void{
   const app = document.querySelector('body') as HTMLBodyElement;
 
@@ -45,6 +53,47 @@ const graphMenu: MenuNode[] = [
     { title: "ABOUT", action: () => alert("ABOUT page") },
     { title: "CONTACT", action: () => alert("CONTACT page") }
 ];
+
+const etudiants:etudiant[] = [
+    {
+        nom:"katsuva",
+        post_nom:"malambo",
+        prenom:"eric",
+        matricule:"4643"
+    },
+    {
+        nom:"kasereka",
+        post_nom:"tsongo",
+        prenom:"jacques",
+        matricule:"4612"
+    },
+    {
+        nom:"kasereka",
+        post_nom:"bahwere",
+        prenom:"jospin",
+        matricule:"4611"
+    },
+    {
+        nom:"kanyere",
+        post_nom:"nice",
+        prenom:"faraja",
+        matricule:"4620"
+    }
+];
+
+function afficherEtudiant():void{
+    const ul = document.createElement("ul");
+    ul.className = "etudiants";
+
+    for (const etudiant of etudiants) {
+        const li = document.createElement("li");
+        li.textContent = `${etudiant.nom} ${etudiant.post_nom} ${etudiant.prenom} ${etudiant.matricule}`;
+        ul.appendChild(li);
+    }
+    document.body.appendChild(ul);
+}
+
+afficherEtudiant();
 
 function buildSubMenu(nodes: MenuNode[]): HTMLUListElement {
     const ul = document.createElement("ul");
@@ -109,5 +158,7 @@ function buildMenu(): void {
         root.appendChild(li);
     });
 }
+
+
 
 buildMenu();
