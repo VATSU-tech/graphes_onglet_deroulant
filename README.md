@@ -1,4 +1,4 @@
-## Page en ligne ici [https://github.com/VATSU-tech/graphes_onglet_deroulant.git](https://github.com/VATSU-tech/graphes_onglet_deroulant.git)
+## Page en ligne ici [https://vatsu-tech.github.io/graphes_onglet_deroulant/](https://vatsu-tech.github.io/graphes_onglet_deroulant/)
  * **le code de la page se trouve sur la branche `public`**
 
  # _Pour le **TP** du groupe **N°4**_
