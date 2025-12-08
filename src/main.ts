@@ -20,10 +20,10 @@ function afficher(couleur:string):void{
 
 const graphMenu: MenuNode[] = [
     {
-        title: "CATEGORIES",
+        title: "MODIFIER",
         children: [
-            { title: "Work 1", action: () => alert("Work 1 executed!") },
-            { title: "Work 2", action: () => alert("Work 2 executed!") },
+            { title: "Police", action: () => alert("Work 1 executed!") },
+            { title: "Couleur", action: () => alert("Work 2 executed!") },
             {
                 title: "Work 3",
                 children: [
