@@ -74,7 +74,7 @@ function afficherEtudiant() {
 afficherEtudiant();
 function buildSubMenu(nodes) {
     const ul = document.createElement("ul");
-    ul.className = "submenu";
+    ul.className = "submenu"; 
     for (const node of nodes) {
         const li = document.createElement("li");
         const a = document.createElement("a");
