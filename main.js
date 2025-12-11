@@ -58,7 +58,7 @@ const etudiants = [
         nom: "kanyere",
         post_nom: "nice",
         prenom: "faraja",
-        matricule: "4620"
+        matricule: "4619"
     }
 ];
 function afficherEtudiant() {
